@@ -8,7 +8,7 @@ router.get('/employees', async (req, res) => {
     const { eid } = req.query;
 
     try {
-        // If eid is provided, return the specific employee
+      
         if (eid) {
             const employee = await Employee.findById(eid);
             if (!employee) {
@@ -17,7 +17,7 @@ router.get('/employees', async (req, res) => {
             return res.status(200).json(employee);
         }
 
-        // If no eid is provided, return all employees
+
         const employees = await Employee.find();
         res.status(200).json(employees);
     } catch (error) {
@@ -67,7 +67,7 @@ router.put('/employees/:eid', async (req, res) => {
 
 // Delete Employee by EID
 router.delete('/employees', async (req, res) => {
-    const { eid } = req.query; // Expecting "eid" in query parameters
+    const { eid } = req.query; 
     if (!eid) {
         return res.status(400).json({ message: 'Employee ID (eid) is required' });
     }
@@ -76,7 +76,7 @@ router.delete('/employees', async (req, res) => {
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'Employee not found' });
         }
-        // Return a success message
+      
         res.status(200).json({ message: 'Employee deleted successfully.' });
     } catch (error) {
         res.status(500).json({ error: error.message });
