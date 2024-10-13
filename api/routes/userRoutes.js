@@ -1,60 +1,58 @@
+// api/routes/userRoutes.js
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const bcrypt = require('bcrypt');
+
 const router = express.Router();
 
-// Signup Route
+// Signup
 router.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    // Input validation can be added here
+    // Check if the email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+        username,
+        email,
+        password: hashedPassword, // Save the hashed password
+    });
 
     try {
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Hash the password before saving
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        // Save new user with hashed password
-        const newUser = new User({
-            name,
-            email,
-            password: hashedPassword
-        });
-
-        await newUser.save();
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (err) {
-        res.status(500).json({ error: 'Internal server error' }); // More generic error for security
+        await user.save();
+        res.status(201).json({ message: 'User created successfully.', user_id: user._id });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 });
 
-// Login Route
+// Login
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
     try {
-        // Find user by email
-        const user = await User.findOne({ email });
+        // Find user by username
+        const user = await User.findOne({ username });
         if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ error: 'Invalid username or password' });
         }
 
-        // Compare password with hashed password in the database
+        // Compare hashed password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({ error: 'Invalid username or password' });
         }
 
-        // Success: Send a success response
-        res.status(200).json({ message: 'Login successful', user });
-    } catch (err) {
-        res.status(500).json({ error: 'Internal server error' }); // More generic error for security
+        // Login successful
+        res.status(200).json({ message: 'Login successful', userId: user._id });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
